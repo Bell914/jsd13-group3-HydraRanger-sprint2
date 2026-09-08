@@ -2,6 +2,7 @@ import { Bell, Filter, Menu, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { ProductTable } from '../components/ProductTable.jsx';
 import { ProductFormModal } from '../components/ProductFormModal.jsx';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal.jsx';
 import { products } from '../data/products.js';
 
 export function AdminProductsPage({ user, onOpenSidebar }) {
@@ -11,6 +12,7 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
   const [formOpen, setFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const searchText = search.trim().toLowerCase();
 
@@ -58,6 +60,25 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
   const closeForm = () => {
     setSelectedProduct(null);
     setFormOpen(false);
+  };
+
+  const openDeleteConfirm = (product) => {
+    setSuccessMessage('');
+    setProductToDelete(product);
+  };
+
+  const closeDeleteConfirm = () => {
+    setProductToDelete(null);
+  };
+
+  const deleteProduct = () => {
+    const updatedProducts = productList.filter((product) => {
+      return product._id !== productToDelete._id;
+    });
+
+    setProductList(updatedProducts);
+    setSuccessMessage(`ลบสินค้า “${productToDelete.name}” เรียบร้อยแล้ว`);
+    setProductToDelete(null);
   };
 
   const changeSearch = (event) => {
@@ -130,10 +151,21 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
           </div>
         </section>
 
-        <ProductTable products={visibleProducts} onEdit={openEditForm} />
+        <ProductTable
+          products={visibleProducts}
+          onEdit={openEditForm}
+          onDelete={openDeleteConfirm}
+        />
       </main>
       {formOpen && (
         <ProductFormModal product={selectedProduct} onClose={closeForm} onSave={saveProduct} />
+      )}
+      {productToDelete && (
+        <DeleteConfirmModal
+          product={productToDelete}
+          onCancel={closeDeleteConfirm}
+          onConfirm={deleteProduct}
+        />
       )}
     </div>
   );

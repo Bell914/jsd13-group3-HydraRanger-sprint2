@@ -29,7 +29,7 @@ const getSummary = (product) => {
   };
 };
 
-export function ProductTable({ products, onEdit }) {
+export function ProductTable({ products, onEdit, onDelete }) {
   return (
     <section className="product-table-card" aria-label="รายการสินค้า">
       <div className="table-scroll">
@@ -76,7 +76,13 @@ export function ProductTable({ products, onEdit }) {
                       <button type="button" aria-label={`แก้ไข ${product.name}`} title="แก้ไข" onClick={() => onEdit(product)}>
                         <Pencil size={16} />
                       </button>
-                      <button type="button" className="danger" aria-label={`ลบ ${product.name}`} title="ลบ" disabled>
+                      <button
+                        type="button"
+                        className="danger"
+                        aria-label={`ลบ ${product.name}`}
+                        title="ลบ"
+                        onClick={() => onDelete(product)}
+                      >
                         <Trash2 size={16} />
                       </button>
                     </div>

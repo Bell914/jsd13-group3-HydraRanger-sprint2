@@ -101,6 +101,15 @@ form button { margin-top: 14px; padding: 14px; border: 0; border-radius: 10px; b
 .checking { min-height: 100vh; display: grid; place-items: center; color: #6b7280; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 22px; overflow-y: auto; background: rgba(17, 24, 39, .55); }
 .product-modal { width: min(880px, 100%); max-height: calc(100vh - 44px); overflow-y: auto; border-radius: 14px; background: #fff; box-shadow: 0 24px 70px rgba(15, 23, 42, .24); }
+.confirm-modal { width: min(460px, 100%); overflow: hidden; border-radius: 14px; background: #fff; box-shadow: 0 24px 70px rgba(15, 23, 42, .24); }
+.confirm-content { display: flex; align-items: flex-start; gap: 14px; padding: 24px; color: #374151; }
+.confirm-content p { margin: 0 0 6px; line-height: 1.6; }
+.confirm-content small { color: #6b7280; }
+.confirm-icon { display: grid; flex: 0 0 42px; height: 42px; place-items: center; border-radius: 50%; background: #fff1f2; color: #e11d48; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #e5e7eb; background: #f9fafb; }
+.confirm-actions > button { min-width: 112px; min-height: 38px; padding: 9px 15px; }
+.delete-action { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 9px; background: #e11d48; color: #fff; font-size: 12px; font-weight: 700; }
+.delete-action:hover { background: #be123c; }
 .modal-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 24px; border-bottom: 1px solid #e5e7eb; background: #fff; }
 .modal-header p { margin: 0 0 4px; color: #9ca3af; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
 .modal-header h2 { margin: 0; color: #1f2937; font-size: 19px; }
