@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LockKeyhole } from 'lucide-react';
 import { AdminSidebar } from './components/AdminSidebar.jsx';
 import { AdminProductsPage } from './pages/AdminProductsPage.jsx';
+import { AdminDashboardPage } from './pages/AdminDashboardPage.jsx';
 import { adminAuthService } from './services/adminAuthService.js';
 
 const Login = ({ onLogin }) => {
@@ -58,6 +59,7 @@ export default function App() {
   const [user, setUser] = useState(adminAuthService.getUser());
   const [checking, setChecking] = useState(Boolean(adminAuthService.getToken()));
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activePage, setActivePage] = useState('products');
 
   useEffect(() => {
     if (!adminAuthService.getToken()) return;
@@ -76,10 +78,11 @@ export default function App() {
     <div className="admin-shell">
       {sidebarOpen && <button type="button" className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} aria-label="ปิดเมนู" />}
       <AdminSidebar
-        activePage="products"
+        activePage={activePage}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onNavigate={() => {
+        onNavigate={(page) => {
+          setActivePage(page);
           setSidebarOpen(false);
         }}
         onLogout={() => {
@@ -87,7 +90,11 @@ export default function App() {
           setUser(null);
         }}
       />
-      <AdminProductsPage user={user} onOpenSidebar={() => setSidebarOpen(true)} />
+      {activePage === 'dashboard' ? (
+        <AdminDashboardPage user={user} onOpenSidebar={() => setSidebarOpen(true)} />
+      ) : (
+        <AdminProductsPage user={user} onOpenSidebar={() => setSidebarOpen(true)} />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { LayoutDashboard, LogOut, Package, ShoppingBag, Users, X } from 'lucide-react';
 
 const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, disabled: true },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'products', label: 'Products', icon: Package },
   { id: 'orders', label: 'Orders', icon: ShoppingBag, disabled: true },
   { id: 'customers', label: 'Customers', icon: Users, disabled: true },
