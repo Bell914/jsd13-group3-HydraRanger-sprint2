@@ -7,19 +7,29 @@ const formatPrice = new Intl.NumberFormat('th-TH', {
 });
 
 const getSummary = (product) => {
-  const variants = product.variants ?? [];
+  const variants = product.variants || [];
   const totalStock = variants.reduce((total, variant) => total + variant.stockQuantity, 0);
   const prices = variants.map((variant) => variant.price);
 
+  let price = 0;
+  if (prices.length > 0) {
+    price = Math.min(...prices);
+  }
+
+  let status = 'สินค้าหมด';
+  if (totalStock > 0) {
+    status = 'พร้อมขาย';
+  }
+
   return {
-    sku: variants[0]?.sku ?? '-',
-    price: prices.length ? Math.min(...prices) : 0,
+    sku: variants.length > 0 ? variants[0].sku : '-',
+    price,
     totalStock,
-    status: totalStock > 0 ? 'พร้อมขาย' : 'สินค้าหมด',
+    status,
   };
 };
 
-export function ProductTable({ products }) {
+export function ProductTable({ products, onEdit }) {
   return (
     <section className="product-table-card" aria-label="รายการสินค้า">
       <div className="table-scroll">
@@ -63,7 +73,7 @@ export function ProductTable({ products }) {
                   </td>
                   <td>
                     <div className="row-actions">
-                      <button type="button" aria-label={`แก้ไข ${product.name}`} title="แก้ไข" disabled>
+                      <button type="button" aria-label={`แก้ไข ${product.name}`} title="แก้ไข" onClick={() => onEdit(product)}>
                         <Pencil size={16} />
                       </button>
                       <button type="button" className="danger" aria-label={`ลบ ${product.name}`} title="ลบ" disabled>

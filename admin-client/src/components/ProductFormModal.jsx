@@ -1,45 +1,95 @@
 import { Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-const emptyVariant = () => ({
-  id: crypto.randomUUID(),
-  sku: '',
-  color: '',
-  colorCode: '',
-  size: 'S',
-  price: '',
-  stockQuantity: '',
-});
+function createId() {
+  return `${Date.now()}-${Math.random()}`;
+}
 
-const initialForm = () => ({
-  name: '',
-  description: '',
-  category: 'tops',
-  gender: 'unisex',
-  tags: '',
-  imageUrl: '',
-  variants: [emptyVariant()],
-});
+function createEmptyVariant() {
+  return {
+    id: createId(),
+    sku: '',
+    color: '',
+    colorCode: '',
+    size: 'S',
+    price: '',
+    stockQuantity: '',
+  };
+}
 
-const validate = (form) => {
+function createEmptyForm() {
+  return {
+    name: '',
+    description: '',
+    category: 'tops',
+    gender: 'unisex',
+    tags: '',
+    imageUrl: '',
+    variants: [createEmptyVariant()],
+  };
+}
+
+function createFormFromProduct(product) {
+  if (!product) {
+    return createEmptyForm();
+  }
+
+  let variants = [createEmptyVariant()];
+
+  if (product.variants && product.variants.length > 0) {
+    variants = product.variants.map((variant) => {
+      return {
+        ...variant,
+        id: variant._id || createId(),
+        price: String(variant.price || ''),
+        stockQuantity: String(variant.stockQuantity ?? ''),
+      };
+    });
+  }
+
+  return {
+    name: product.name || '',
+    description: product.description || '',
+    category: product.category || 'tops',
+    gender: product.gender || 'unisex',
+    tags: (product.tags || []).join(', '),
+    imageUrl: product.imageUrl || '',
+    variants,
+  };
+}
+
+function validateForm(form) {
   const errors = {};
-  if (!form.name.trim()) errors.name = 'กรุณากรอกชื่อสินค้า';
-  if (!form.description.trim()) errors.description = 'กรุณากรอกรายละเอียดสินค้า';
+
+  if (!form.name.trim()) {
+    errors.name = 'กรุณากรอกชื่อสินค้า';
+  }
+
+  if (!form.description.trim()) {
+    errors.description = 'กรุณากรอกรายละเอียดสินค้า';
+  }
 
   form.variants.forEach((variant, index) => {
-    if (!variant.sku.trim()) errors[`variant-${index}-sku`] = 'กรุณากรอก SKU';
-    if (!variant.color.trim()) errors[`variant-${index}-color`] = 'กรุณากรอกสี';
-    if (Number(variant.price) <= 0) errors[`variant-${index}-price`] = 'ราคาต้องมากกว่า 0';
+    if (!variant.sku.trim()) {
+      errors[`variant-${index}-sku`] = 'กรุณากรอก SKU';
+    }
+    if (!variant.color.trim()) {
+      errors[`variant-${index}-color`] = 'กรุณากรอกสี';
+    }
+    if (Number(variant.price) <= 0) {
+      errors[`variant-${index}-price`] = 'ราคาต้องมากกว่า 0';
+    }
     if (variant.stockQuantity === '' || Number(variant.stockQuantity) < 0) {
       errors[`variant-${index}-stock`] = 'สต็อกต้องเป็น 0 หรือมากกว่า';
     }
   });
 
   return errors;
-};
+}
 
-export function ProductFormModal({ onClose, onCreate }) {
-  const [form, setForm] = useState(initialForm);
+export function ProductFormModal({ product, onClose, onSave }) {
+  const isEditing = Boolean(product);
+  const [form, setForm] = useState(() => createFormFromProduct(product));
   const [errors, setErrors] = useState({});
   const nameInputRef = useRef(null);
 
@@ -53,59 +103,96 @@ export function ProductFormModal({ onClose, onCreate }) {
   }, [onClose]);
 
   const updateField = (field, value) => {
-    setForm((current) => ({ ...current, [field]: value }));
-    setErrors((current) => ({ ...current, [field]: undefined }));
+    const updatedForm = { ...form };
+    updatedForm[field] = value;
+    setForm(updatedForm);
+
+    const updatedErrors = { ...errors };
+    delete updatedErrors[field];
+    setErrors(updatedErrors);
   };
 
   const updateVariant = (index, field, value) => {
-    setForm((current) => ({
-      ...current,
-      variants: current.variants.map((variant, variantIndex) =>
-        variantIndex === index ? { ...variant, [field]: value } : variant
-      ),
-    }));
-    setErrors((current) => ({ ...current, [`variant-${index}-${field === 'stockQuantity' ? 'stock' : field}`]: undefined }));
+    const updatedVariants = [...form.variants];
+    updatedVariants[index] = { ...updatedVariants[index] };
+    updatedVariants[index][field] = value;
+    setForm({ ...form, variants: updatedVariants });
+
+    let errorField = field;
+    if (field === 'stockQuantity') {
+      errorField = 'stock';
+    }
+
+    const updatedErrors = { ...errors };
+    delete updatedErrors[`variant-${index}-${errorField}`];
+    setErrors(updatedErrors);
   };
 
   const removeVariant = (index) => {
-    setForm((current) => ({
-      ...current,
-      variants: current.variants.filter((_, variantIndex) => variantIndex !== index),
-    }));
+    const updatedVariants = form.variants.filter((variant, variantIndex) => {
+      return variantIndex !== index;
+    });
+    setForm({ ...form, variants: updatedVariants });
+  };
+
+  const addVariant = () => {
+    const updatedVariants = [...form.variants, createEmptyVariant()];
+    setForm({ ...form, variants: updatedVariants });
   };
 
   const submit = (event) => {
     event.preventDefault();
-    const nextErrors = validate(form);
+    const nextErrors = validateForm(form);
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
       return;
     }
 
-    const productId = `product-${Date.now()}`;
-    onCreate({
-      ...form,
-      _id: productId,
-      productId,
-      tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
-      variants: form.variants.map(({ id, ...variant }) => ({
-        ...variant,
-        _id: `${productId}-${variant.sku.toLowerCase()}`,
+    let productId = `product-${Date.now()}`;
+    if (product && product._id) {
+      productId = product._id;
+    } else if (product && product.productId) {
+      productId = product.productId;
+    }
+
+    const tags = form.tags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== '');
+    const variants = form.variants.map((variant) => {
+      return {
+        _id: variant._id || `${productId}-${variant.sku.toLowerCase()}`,
+        sku: variant.sku,
+        color: variant.color,
+        colorCode: variant.colorCode,
+        size: variant.size,
         price: Number(variant.price),
         stockQuantity: Number(variant.stockQuantity),
-      })),
+      };
     });
+
+    let savedProductId = productId;
+    if (product && product.productId) {
+      savedProductId = product.productId;
+    }
+
+    const savedProduct = {
+      ...form,
+      _id: productId,
+      productId: savedProductId,
+      tags,
+      variants,
+    };
+
+    onSave(savedProduct);
   };
 
   return (
     <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="product-modal" role="dialog" aria-modal="true" aria-labelledby="create-product-title">
+      <section className="product-modal" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
         <header className="modal-header">
           <div>
             <p>PRODUCT MANAGEMENT</p>
-            <h2 id="create-product-title">เพิ่มสินค้าใหม่</h2>
+            <h2 id="product-form-title">{isEditing ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="ปิดฟอร์มเพิ่มสินค้า"><X size={20} /></button>
+          <button type="button" onClick={onClose} aria-label="ปิดฟอร์มสินค้า"><X size={20} /></button>
         </header>
 
         <form className="product-form" onSubmit={submit} noValidate>
@@ -155,7 +242,7 @@ export function ProductFormModal({ onClose, onCreate }) {
               <h3>ตัวเลือกสินค้า (Variants)</h3>
               <p>กำหนด SKU สี ไซซ์ ราคา และจำนวนสินค้า</p>
             </div>
-            <button type="button" className="secondary-action" onClick={() => setForm((current) => ({ ...current, variants: [...current.variants, emptyVariant()] }))}>
+            <button type="button" className="secondary-action" onClick={addVariant}>
               <Plus size={15} /> เพิ่ม Variant
             </button>
           </div>
@@ -179,7 +266,7 @@ export function ProductFormModal({ onClose, onCreate }) {
 
           <footer className="modal-actions">
             <button type="button" className="cancel-action" onClick={onClose}>ยกเลิก</button>
-            <button type="submit" className="primary-action">บันทึกสินค้า</button>
+            <button type="submit" className="primary-action">{isEditing ? 'บันทึกการแก้ไข' : 'บันทึกสินค้า'}</button>
           </footer>
         </form>
       </section>
