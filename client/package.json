@@ -26,11 +26,8 @@
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "daisyui": "^5.7.22",
-<<<<<<< HEAD
-=======
     "jest-axe": "^11.0.0",
     "jsdom": "^30.0.1",
->>>>>>> 89ab9d3324a753d378a1a5bc445c18dff071923d
     "tailwindcss": "^4.0.0",
     "vite": "^6.1.0",
     "vitest": "^4.1.11"
