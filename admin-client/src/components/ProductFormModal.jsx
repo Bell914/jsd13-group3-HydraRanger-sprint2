@@ -24,6 +24,7 @@ function createEmptyForm() {
     category: 'tops',
     gender: 'unisex',
     tags: '',
+    availableDate: '',
     imageUrl: '',
     variants: [createEmptyVariant()],
   };
@@ -53,6 +54,7 @@ function createFormFromProduct(product) {
     category: product.category || 'tops',
     gender: product.gender || 'unisex',
     tags: (product.tags || []).join(', '),
+    availableDate: product.availableDate ? product.availableDate.slice(0, 10) : '',
     imageUrl: product.imageUrl || '',
     variants,
   };
@@ -69,6 +71,15 @@ function validateForm(form) {
     errors.description = 'กรุณากรอกรายละเอียดสินค้า';
   }
 
+  const tags = form.tags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== '');
+  if (tags.length === 0) {
+    errors.tags = 'กรุณากรอก Tag อย่างน้อย 1 รายการ';
+  }
+
+  if (!form.availableDate) {
+    errors.availableDate = 'กรุณาเลือกวันที่เริ่มจำหน่าย';
+  }
+
   form.variants.forEach((variant, index) => {
     if (!variant.sku.trim()) {
       errors[`variant-${index}-sku`] = 'กรุณากรอก SKU';
@@ -76,11 +87,14 @@ function validateForm(form) {
     if (!variant.color.trim()) {
       errors[`variant-${index}-color`] = 'กรุณากรอกสี';
     }
-    if (Number(variant.price) <= 0) {
+    const price = Number(variant.price);
+    const stock = Number(variant.stockQuantity);
+
+    if (variant.price === '' || !Number.isFinite(price) || price <= 0) {
       errors[`variant-${index}-price`] = 'ราคาต้องมากกว่า 0';
     }
-    if (variant.stockQuantity === '' || Number(variant.stockQuantity) < 0) {
-      errors[`variant-${index}-stock`] = 'สต็อกต้องเป็น 0 หรือมากกว่า';
+    if (variant.stockQuantity === '' || !Number.isInteger(stock) || stock < 0) {
+      errors[`variant-${index}-stock`] = 'สต็อกต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป';
     }
   });
 
@@ -199,7 +213,7 @@ export function ProductFormModal({ product, onClose, onSave }) {
           <div className="form-grid">
             <label className="field full-width">
               <span>ชื่อสินค้า <b>*</b></span>
-              <input ref={nameInputRef} value={form.name} onChange={(event) => updateField('name', event.target.value)} aria-invalid={Boolean(errors.name)} />
+              <input type="text" ref={nameInputRef} value={form.name} onChange={(event) => updateField('name', event.target.value)} aria-invalid={Boolean(errors.name)} />
               {errors.name && <small className="field-error">{errors.name}</small>}
             </label>
 
@@ -227,13 +241,20 @@ export function ProductFormModal({ product, onClose, onSave }) {
             </label>
 
             <label className="field">
-              <span>Tags</span>
-              <input value={form.tags} onChange={(event) => updateField('tags', event.target.value)} placeholder="casual, minimal" />
+              <span>Tags <b>*</b></span>
+              <input type="text" value={form.tags} onChange={(event) => updateField('tags', event.target.value)} placeholder="casual, minimal" aria-invalid={Boolean(errors.tags)} />
+              {errors.tags && <small className="field-error">{errors.tags}</small>}
             </label>
 
             <label className="field">
+              <span>วันที่เริ่มจำหน่าย <b>*</b></span>
+              <input type="date" value={form.availableDate} onChange={(event) => updateField('availableDate', event.target.value)} aria-invalid={Boolean(errors.availableDate)} />
+              {errors.availableDate && <small className="field-error">{errors.availableDate}</small>}
+            </label>
+
+            <label className="field full-width">
               <span>Image URL</span>
-              <input value={form.imageUrl} onChange={(event) => updateField('imageUrl', event.target.value)} placeholder="/collection-2026/products/..." />
+              <input type="text" value={form.imageUrl} onChange={(event) => updateField('imageUrl', event.target.value)} placeholder="/collection-2026/products/..." />
             </label>
           </div>
 
@@ -252,12 +273,12 @@ export function ProductFormModal({ product, onClose, onSave }) {
               <fieldset className="variant-card" key={variant.id}>
                 <legend>Variant {index + 1}</legend>
                 <div className="variant-grid">
-                  <label className="field"><span>SKU *</span><input value={variant.sku} onChange={(event) => updateVariant(index, 'sku', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-sku`])} />{errors[`variant-${index}-sku`] && <small className="field-error">{errors[`variant-${index}-sku`]}</small>}</label>
-                  <label className="field"><span>สี *</span><input value={variant.color} onChange={(event) => updateVariant(index, 'color', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-color`])} />{errors[`variant-${index}-color`] && <small className="field-error">{errors[`variant-${index}-color`]}</small>}</label>
-                  <label className="field"><span>รหัสสี</span><input value={variant.colorCode} onChange={(event) => updateVariant(index, 'colorCode', event.target.value)} placeholder="OW" /></label>
+                  <label className="field"><span>SKU *</span><input type="text" value={variant.sku} onChange={(event) => updateVariant(index, 'sku', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-sku`])} />{errors[`variant-${index}-sku`] && <small className="field-error">{errors[`variant-${index}-sku`]}</small>}</label>
+                  <label className="field"><span>สี *</span><input type="text" value={variant.color} onChange={(event) => updateVariant(index, 'color', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-color`])} />{errors[`variant-${index}-color`] && <small className="field-error">{errors[`variant-${index}-color`]}</small>}</label>
+                  <label className="field"><span>รหัสสี</span><input type="text" value={variant.colorCode} onChange={(event) => updateVariant(index, 'colorCode', event.target.value)} placeholder="OW" /></label>
                   <label className="field"><span>ไซซ์</span><select value={variant.size} onChange={(event) => updateVariant(index, 'size', event.target.value)}><option>S</option><option>M</option><option>L</option></select></label>
-                  <label className="field"><span>ราคา *</span><input type="number" min="1" value={variant.price} onChange={(event) => updateVariant(index, 'price', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-price`])} />{errors[`variant-${index}-price`] && <small className="field-error">{errors[`variant-${index}-price`]}</small>}</label>
-                  <label className="field"><span>Stock *</span><input type="number" min="0" value={variant.stockQuantity} onChange={(event) => updateVariant(index, 'stockQuantity', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-stock`])} />{errors[`variant-${index}-stock`] && <small className="field-error">{errors[`variant-${index}-stock`]}</small>}</label>
+                  <label className="field"><span>ราคา *</span><input type="number" min="1" step="0.01" value={variant.price} onChange={(event) => updateVariant(index, 'price', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-price`])} />{errors[`variant-${index}-price`] && <small className="field-error">{errors[`variant-${index}-price`]}</small>}</label>
+                  <label className="field"><span>Stock *</span><input type="number" min="0" step="1" value={variant.stockQuantity} onChange={(event) => updateVariant(index, 'stockQuantity', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-stock`])} />{errors[`variant-${index}-stock`] && <small className="field-error">{errors[`variant-${index}-stock`]}</small>}</label>
                 </div>
                 {form.variants.length > 1 && <button type="button" className="remove-variant" onClick={() => removeVariant(index)}><Trash2 size={14} /> ลบ Variant</button>}
               </fieldset>

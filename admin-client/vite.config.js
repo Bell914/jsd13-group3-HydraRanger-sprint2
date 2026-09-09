@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: { port: 5174 },
   build: {
+    minify: false,
+    cssMinify: false,
     rollupOptions: {
       output: {
         entryFileNames: 'assets/index.js',
