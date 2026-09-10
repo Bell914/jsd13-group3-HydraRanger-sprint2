@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, Shield, AlertCircle } from 'lucide-react';
 import { authService } from '../services/authService.js';
 import { Button, Card, FormInput } from '../components/index.js';
-// import { validateRegisterForm } from '../utils/validation.js'; // 1. import validation helper
+import { validateRegisterForm } from '../utils/validation.js'; // 1. import validation helper
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
