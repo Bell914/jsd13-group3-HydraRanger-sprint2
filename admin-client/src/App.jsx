@@ -59,7 +59,7 @@ export default function App() {
   const [user, setUser] = useState(adminAuthService.getUser());
   const [checking, setChecking] = useState(Boolean(adminAuthService.getToken()));
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activePage, setActivePage] = useState('products');
+  const [activePage, setActivePage] = useState('dashboard');
 
   useEffect(() => {
     if (!adminAuthService.getToken()) return;
