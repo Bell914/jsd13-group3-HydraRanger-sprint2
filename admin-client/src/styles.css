@@ -27,6 +27,8 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 h1 { margin: 0; }
 .muted { color: #6b7280; line-height: 1.6; }
 .error { padding: 10px 12px; border-radius: 10px; background: #fef2f2; color: #b91c1c; font-size: 13px; }
+.error-panel { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding: 12px 14px; border: 1px solid #fecaca; border-radius: 10px; background: #fef2f2; color: #b91c1c; font-size: 13px; font-weight: 700; }
+.error-panel button { flex: 0 0 auto; padding: 7px 11px; border: 1px solid #fca5a5; border-radius: 7px; background: #fff; color: #b91c1c; font-weight: 700; }
 form { display: grid; gap: 9px; margin-top: 26px; }
 form label { margin-top: 8px; color: #374151; font-size: 13px; font-weight: 700; }
 form input { width: 100%; padding: 13px 14px; border: 1px solid #d1d5db; border-radius: 10px; outline: none; }
@@ -76,6 +78,9 @@ form button { margin-top: 14px; padding: 14px; border: 0; border-radius: 10px; b
 .filter-button { display: inline-flex; align-items: center; gap: 6px; }
 
 .product-table-card { overflow: hidden; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 2px rgba(0, 0, 0, .04); }
+.empty-state { padding: 60px 24px; border: 1px dashed #d1d5db; border-radius: 12px; background: #fff; color: #6b7280; text-align: center; }
+.empty-state strong { display: block; color: #374151; font-size: 17px; }
+.empty-state p { margin: 7px 0 0; }
 .table-scroll { overflow-x: auto; }
 .product-table { width: 100%; min-width: 800px; border-collapse: collapse; color: #4b5563; font-size: 13px; text-align: left; }
 .product-table th { padding: 12px 20px; background: #f9fafb; border-bottom: 1px solid #f3f4f6; color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; }

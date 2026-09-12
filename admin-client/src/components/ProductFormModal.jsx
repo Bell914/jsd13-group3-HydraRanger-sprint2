@@ -105,6 +105,8 @@ export function ProductFormModal({ product, onClose, onSave }) {
   const isEditing = Boolean(product);
   const [form, setForm] = useState(() => createFormFromProduct(product));
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [loading, setLoading] = useState(false);
   const nameInputRef = useRef(null);
 
   useEffect(() => {
@@ -154,8 +156,9 @@ export function ProductFormModal({ product, onClose, onSave }) {
     setForm({ ...form, variants: updatedVariants });
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    setSubmitError('');
     const nextErrors = validateForm(form);
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
@@ -195,7 +198,14 @@ export function ProductFormModal({ product, onClose, onSave }) {
       variants,
     };
 
-    onSave(savedProduct);
+    setLoading(true);
+    try {
+      await onSave(savedProduct);
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -285,9 +295,13 @@ export function ProductFormModal({ product, onClose, onSave }) {
             ))}
           </div>
 
+          {submitError && <p className="error" role="alert">{submitError}</p>}
+
           <footer className="modal-actions">
-            <button type="button" className="cancel-action" onClick={onClose}>ยกเลิก</button>
-            <button type="submit" className="primary-action">{isEditing ? 'บันทึกการแก้ไข' : 'บันทึกสินค้า'}</button>
+            <button type="button" className="cancel-action" onClick={onClose} disabled={loading}>ยกเลิก</button>
+            <button type="submit" className="primary-action" disabled={loading}>
+              {loading ? 'กำลังบันทึก…' : (isEditing ? 'บันทึกการแก้ไข' : 'บันทึกสินค้า')}
+            </button>
           </footer>
         </form>
       </section>

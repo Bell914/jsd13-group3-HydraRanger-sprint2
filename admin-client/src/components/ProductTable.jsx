@@ -30,6 +30,15 @@ const getSummary = (product) => {
 };
 
 export function ProductTable({ products, onEdit, onDelete }) {
+  if (products.length === 0) {
+    return (
+      <section className="empty-state" aria-live="polite">
+        <strong>ยังไม่มีสินค้า</strong>
+        <p>เพิ่มสินค้าใหม่ หรือเปลี่ยนคำค้นหาเพื่อดูรายการสินค้า</p>
+      </section>
+    );
+  }
+
   return (
     <section className="product-table-card" aria-label="รายการสินค้า">
       <div className="table-scroll">

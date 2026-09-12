@@ -1,18 +1,52 @@
 import { Bell, Filter, Menu, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ProductTable } from '../components/ProductTable.jsx';
 import { ProductFormModal } from '../components/ProductFormModal.jsx';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal.jsx';
-import { products } from '../data/products.js';
+import { productService } from '../services/productService.js';
 
 export function AdminProductsPage({ user, onOpenSidebar }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
-  const [productList, setProductList] = useState(() => products);
+  const [productList, setProductList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [productToDelete, setProductToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const loadProducts = async () => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const result = await productService.getProducts();
+      setProductList(result);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    async function loadFirstPage() {
+      setLoading(true);
+      setErrorMessage('');
+
+      try {
+        const result = await productService.getProducts();
+        setProductList(result);
+      } catch (error) {
+        setErrorMessage(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFirstPage();
+  }, []);
 
   const searchText = search.trim().toLowerCase();
 
@@ -27,22 +61,31 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
     return isCorrectCategory && (isNameMatch || isSkuMatch);
   });
 
-  const saveProduct = (product) => {
-    if (selectedProduct) {
-      const updatedProducts = productList.map((item) => {
-        if (item._id === selectedProduct._id) {
-          return product;
-        }
-        return item;
-      });
-      setProductList(updatedProducts);
-      setSuccessMessage(`แก้ไขสินค้า “${product.name}” เรียบร้อยแล้ว`);
-    } else {
-      setProductList([product, ...productList]);
-      setSuccessMessage(`เพิ่มสินค้า “${product.name}” เรียบร้อยแล้ว`);
+  const saveProduct = async (product) => {
+    setErrorMessage('');
+    try {
+      if (selectedProduct) {
+        const updatedProduct = await productService.updateProduct(selectedProduct._id, product);
+        setProductList((currentProducts) => {
+          return currentProducts.map((currentProduct) => {
+            if (currentProduct._id === updatedProduct._id) {
+              return updatedProduct;
+            }
+            return currentProduct;
+          });
+        });
+        setSuccessMessage(`แก้ไขสินค้า “${product.name}” เรียบร้อยแล้ว`);
+      } else {
+        const newProduct = await productService.createProduct(product);
+        setProductList((currentProducts) => [newProduct, ...currentProducts]);
+        setSuccessMessage(`เพิ่มสินค้า “${product.name}” เรียบร้อยแล้ว`);
+      }
+      setSelectedProduct(null);
+      setFormOpen(false);
+    } catch (error) {
+      setErrorMessage(error.message);
+      throw error;
     }
-    setSelectedProduct(null);
-    setFormOpen(false);
   };
 
   const openCreateForm = () => {
@@ -71,14 +114,23 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
     setProductToDelete(null);
   };
 
-  const deleteProduct = () => {
-    const updatedProducts = productList.filter((product) => {
-      return product._id !== productToDelete._id;
-    });
+  const deleteProduct = async () => {
+    if (!productToDelete) return;
 
-    setProductList(updatedProducts);
-    setSuccessMessage(`ลบสินค้า “${productToDelete.name}” เรียบร้อยแล้ว`);
-    setProductToDelete(null);
+    setDeleting(true);
+    setErrorMessage('');
+    try {
+      await productService.deleteProduct(productToDelete._id);
+      setProductList((currentProducts) => {
+        return currentProducts.filter((product) => product._id !== productToDelete._id);
+      });
+      setSuccessMessage(`ลบสินค้า “${productToDelete.name}” เรียบร้อยแล้ว`);
+      setProductToDelete(null);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const changeSearch = (event) => {
@@ -128,6 +180,13 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
           </p>
         )}
 
+        {errorMessage && (
+          <div className="error-panel" role="alert">
+            <span>{errorMessage}</span>
+            <button type="button" onClick={loadProducts} disabled={loading}>ลองใหม่</button>
+          </div>
+        )}
+
         <section className="filter-toolbar" aria-label="ค้นหาและกรองสินค้า">
           <label className="product-search">
             <Search size={15} aria-hidden="true" />
@@ -151,11 +210,15 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
           </div>
         </section>
 
-        <ProductTable
-          products={visibleProducts}
-          onEdit={openEditForm}
-          onDelete={openDeleteConfirm}
-        />
+        {loading ? (
+          <p>กำลังโหลดข้อมูลสินค้า...</p>
+        ) : (
+          <ProductTable
+            products={visibleProducts}
+            onEdit={openEditForm}
+            onDelete={openDeleteConfirm}
+          />
+        )}
       </main>
       {formOpen && (
         <ProductFormModal product={selectedProduct} onClose={closeForm} onSave={saveProduct} />
@@ -163,6 +226,7 @@ export function AdminProductsPage({ user, onOpenSidebar }) {
       {productToDelete && (
         <DeleteConfirmModal
           product={productToDelete}
+          loading={deleting}
           onCancel={closeDeleteConfirm}
           onConfirm={deleteProduct}
         />

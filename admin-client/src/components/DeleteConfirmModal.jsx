@@ -1,6 +1,6 @@
 import { AlertTriangle, X } from 'lucide-react';
 
-export function DeleteConfirmModal({ product, onCancel, onConfirm }) {
+export function DeleteConfirmModal({ product, loading, onCancel, onConfirm }) {
   return (
     <div
       className="modal-backdrop"
@@ -31,16 +31,16 @@ export function DeleteConfirmModal({ product, onCancel, onConfirm }) {
             <p id="delete-product-description">
               ต้องการลบสินค้า <strong>“{product.name}”</strong> ใช่หรือไม่?
             </p>
-            <small>เมื่อลบแล้วจะไม่สามารถย้อนกลับได้</small>
+            <small>สินค้าจะถูกปิดการใช้งานและซ่อนออกจากรายการ</small>
           </div>
         </div>
 
         <footer className="confirm-actions">
-          <button type="button" className="cancel-action" onClick={onCancel}>
+          <button type="button" className="cancel-action" onClick={onCancel} disabled={loading}>
             ยกเลิก
           </button>
-          <button type="button" className="delete-action" onClick={onConfirm}>
-            ลบสินค้า
+          <button type="button" className="delete-action" onClick={onConfirm} disabled={loading}>
+            {loading ? 'กำลังลบ…' : 'ลบสินค้า'}
           </button>
         </footer>
       </section>
