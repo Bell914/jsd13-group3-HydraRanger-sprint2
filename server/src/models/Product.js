@@ -7,13 +7,16 @@ const variantSchema = new mongoose.Schema(
     colorCode: { type: String, trim: true, default: '' },
     size: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
-    stockQuantity: { type: Number, required: true, min: 0, default: 0 }
+    stockQuantity: { type: Number, required: true, min: 0, default: 0 },
+    imageUrl: { type: String, trim: true, default: '' },
+    detailImages: [{ type: String, trim: true }]
   },
   { _id: true }
 );
 
 const productSchema = new mongoose.Schema(
   {
+    productId: { type: String, required: true, unique: true, trim: true },
     name: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     category: { type: String, required: true, trim: true },

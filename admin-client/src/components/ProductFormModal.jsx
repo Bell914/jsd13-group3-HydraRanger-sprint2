@@ -1,6 +1,67 @@
 import { Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+const IMAGE_SERVER_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+
+function getFullImageUrl(imageUrl) {
+  if (!imageUrl) {
+    return '';
+  }
+
+  if (imageUrl.startsWith('http')) {
+    return imageUrl;
+  }
+
+  return `${IMAGE_SERVER_URL}${imageUrl}`;
+}
+
+function ImagePreview({ imageUrl, label }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageUrl]);
+
+  if (!imageUrl) {
+    return <p className="image-preview-empty">กรอก URL แล้วรูปจะแสดงตรงนี้</p>;
+  }
+
+  if (imageFailed) {
+    return <p className="image-preview-error">ไม่สามารถแสดงรูปนี้ได้ กรุณาตรวจสอบ URL</p>;
+  }
+
+  return (
+    <div className="image-preview">
+      <img
+        src={getFullImageUrl(imageUrl)}
+        alt={label}
+        onError={() => setImageFailed(true)}
+      />
+    </div>
+  );
+}
+
+function getAllImageUrls(form) {
+  const imageUrls = [];
+
+  if (form.imageUrl) {
+    imageUrls.push(form.imageUrl);
+  }
+
+  form.variants.forEach((variant) => {
+    if (variant.imageUrl) {
+      imageUrls.push(variant.imageUrl);
+    }
+
+    if (Array.isArray(variant.detailImages)) {
+      imageUrls.push(...variant.detailImages);
+    }
+  });
+
+  return [...new Set(imageUrls)];
+}
+
 function createId() {
   return `${Date.now()}-${Math.random()}`;
 }
@@ -14,6 +75,8 @@ function createEmptyVariant() {
     size: 'S',
     price: '',
     stockQuantity: '',
+    imageUrl: '',
+    detailImages: [],
   };
 }
 
@@ -108,6 +171,7 @@ export function ProductFormModal({ product, onClose, onSave }) {
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
   const nameInputRef = useRef(null);
+  const allImageUrls = getAllImageUrls(form);
 
   useEffect(() => {
     nameInputRef.current?.focus();
@@ -182,6 +246,8 @@ export function ProductFormModal({ product, onClose, onSave }) {
         size: variant.size,
         price: Number(variant.price),
         stockQuantity: Number(variant.stockQuantity),
+        imageUrl: variant.imageUrl || form.imageUrl,
+        detailImages: variant.detailImages || [],
       };
     });
 
@@ -266,6 +332,22 @@ export function ProductFormModal({ product, onClose, onSave }) {
               <span>Image URL</span>
               <input type="text" value={form.imageUrl} onChange={(event) => updateField('imageUrl', event.target.value)} placeholder="/collection-2026/products/..." />
             </label>
+            <div className="field full-width">
+              <span>ภาพทั้งหมดก่อนบันทึก ({allImageUrls.length} ภาพ)</span>
+              {allImageUrls.length === 0 ? (
+                <ImagePreview imageUrl="" label="ยังไม่มีรูปสินค้า" />
+              ) : (
+                <div className="image-preview-gallery">
+                  {allImageUrls.map((imageUrl, index) => (
+                    <ImagePreview
+                      key={imageUrl}
+                      imageUrl={imageUrl}
+                      label={`ตัวอย่างรูป ${index + 1} ของ ${form.name || 'สินค้าใหม่'}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="variant-heading">
@@ -289,6 +371,11 @@ export function ProductFormModal({ product, onClose, onSave }) {
                   <label className="field"><span>ไซซ์</span><select value={variant.size} onChange={(event) => updateVariant(index, 'size', event.target.value)}><option>S</option><option>M</option><option>L</option></select></label>
                   <label className="field"><span>ราคา *</span><input type="number" min="1" step="0.01" value={variant.price} onChange={(event) => updateVariant(index, 'price', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-price`])} />{errors[`variant-${index}-price`] && <small className="field-error">{errors[`variant-${index}-price`]}</small>}</label>
                   <label className="field"><span>Stock *</span><input type="number" min="0" step="1" value={variant.stockQuantity} onChange={(event) => updateVariant(index, 'stockQuantity', event.target.value)} aria-invalid={Boolean(errors[`variant-${index}-stock`])} />{errors[`variant-${index}-stock`] && <small className="field-error">{errors[`variant-${index}-stock`]}</small>}</label>
+                  <label className="field full-width"><span>รูปของ Variant</span><input type="text" value={variant.imageUrl || ''} onChange={(event) => updateVariant(index, 'imageUrl', event.target.value)} placeholder="เว้นว่างเพื่อใช้รูปหลัก" /></label>
+                  <div className="field full-width">
+                    <span>ตัวอย่างรูป Variant {index + 1}</span>
+                    <ImagePreview imageUrl={variant.imageUrl || form.imageUrl} label={`ตัวอย่าง ${variant.sku || `Variant ${index + 1}`}`} />
+                  </div>
                 </div>
                 {form.variants.length > 1 && <button type="button" className="remove-variant" onClick={() => removeVariant(index)}><Trash2 size={14} /> ลบ Variant</button>}
               </fieldset>

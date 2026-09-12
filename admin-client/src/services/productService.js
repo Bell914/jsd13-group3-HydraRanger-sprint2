@@ -46,7 +46,9 @@ function prepareProduct(product) {
         colorCode: variant.colorCode,
         size: variant.size,
         price: variant.price,
-        stockQuantity: variant.stockQuantity
+        stockQuantity: variant.stockQuantity,
+        imageUrl: variant.imageUrl || product.imageUrl || '',
+        detailImages: variant.detailImages || []
       };
     })
   };

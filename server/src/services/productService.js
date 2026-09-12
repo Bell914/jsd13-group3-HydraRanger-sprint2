@@ -12,7 +12,8 @@ export async function getProductById(id) {
 }
 
 export async function createProduct(productData) {
-  return Product.create(productData);
+  const productId = productData.productId || `product-${Date.now()}`;
+  return Product.create({ ...productData, productId });
 }
 
 export async function updateProduct(id, productData) {

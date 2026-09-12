@@ -1,4 +1,47 @@
-import { Image, Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Image } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+const IMAGE_SERVER_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+
+const getProductImageUrl = (product) => {
+  const firstVariant = product.variants?.[0];
+  const imageUrl = firstVariant?.imageUrl || product.imageUrl;
+
+  if (!imageUrl) {
+    return '';
+  }
+
+  if (imageUrl.startsWith('http')) {
+    return imageUrl;
+  }
+
+  return `${IMAGE_SERVER_URL.replace('/api', '')}${imageUrl}`;
+};
+
+function ProductThumbnail({ product }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageUrl = getProductImageUrl(product);
+
+  if (!imageUrl || imageFailed) {
+    return (
+      <div className="product-thumbnail product-thumbnail-placeholder">
+        <Image size={20} aria-hidden="true" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="product-thumbnail">
+      <img
+        src={imageUrl}
+        alt={`รูปสินค้า ${product.name}`}
+        loading="lazy"
+        onError={() => setImageFailed(true)}
+      />
+    </div>
+  );
+}
 
 const formatPrice = new Intl.NumberFormat('th-TH', {
   style: 'currency',
@@ -60,9 +103,7 @@ export function ProductTable({ products, onEdit, onDelete }) {
               return (
                 <tr key={product._id ?? product.productId}>
                   <td>
-                    <div className="product-thumbnail">
-                      <Image size={20} aria-hidden="true" />
-                    </div>
+                    <ProductThumbnail product={product} />
                   </td>
                   <td>
                     <strong className="product-name">{product.name}</strong>
@@ -83,7 +124,7 @@ export function ProductTable({ products, onEdit, onDelete }) {
                   <td>
                     <div className="row-actions">
                       <button type="button" aria-label={`แก้ไข ${product.name}`} title="แก้ไข" onClick={() => onEdit(product)}>
-                        <Pencil size={16} />
+                        แก้ไข
                       </button>
                       <button
                         type="button"
@@ -92,7 +133,7 @@ export function ProductTable({ products, onEdit, onDelete }) {
                         title="ลบ"
                         onClick={() => onDelete(product)}
                       >
-                        <Trash2 size={16} />
+                        ลบ
                       </button>
                     </div>
                   </td>
